@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from "react";
 import SearchBar from "@/components/SearchBar";
 import { Deal } from "@/types";
@@ -18,6 +17,7 @@ import {
 import ChatInterface from "@/components/ChatInterface";
 import { Button } from "@/components/ui/button";
 import { initializeModel } from "@/services/aiService";
+import DealCard from "@/components/DealCard";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("chat");
@@ -27,7 +27,6 @@ const Index = () => {
   const chatInterfaceRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
-    // Initialize model on page load
     initializeModel();
   }, []);
 
@@ -45,15 +44,9 @@ const Index = () => {
   };
   
   const handleQuickAskClick = (question: string) => {
-    // Set active tab to chat
     setActiveTab("chat");
-    
-    // Find the current ChatInterface component and pass the question
-    // We'll communicate with it through a custom event
     const event = new CustomEvent('quickAsk', { detail: { question } });
     document.dispatchEvent(event);
-    
-    // Scroll to the chat interface
     if (chatInterfaceRef.current) {
       chatInterfaceRef.current.scrollIntoView({ behavior: 'smooth' });
     }
@@ -61,7 +54,6 @@ const Index = () => {
   
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-primary text-white py-8">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center text-center">
@@ -102,7 +94,6 @@ const Index = () => {
         </div>
       </header>
       
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="chat" className="w-full" onValueChange={setActiveTab} value={activeTab}>
           <TabsList className="mb-8 max-w-md mx-auto">
@@ -208,7 +199,6 @@ const Index = () => {
         </Tabs>
       </main>
       
-      {/* Footer */}
       <footer className="bg-gray-100 py-8 border-t border-gray-200">
         <div className="container mx-auto px-4 text-center">
           <p className="text-gray-600">
