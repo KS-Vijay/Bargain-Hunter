@@ -52,7 +52,7 @@ const mockDeals: Deal[] = [
   {
     id: "4",
     title: "ASUS Chromebook Flip C434",
-    description: "2-In-1 Laptop 14" Touchscreen FHD, 4GB RAM, 64GB eMMC Storage",
+    description: "2-In-1 Laptop 14\\\" Touchscreen FHD, 4GB RAM, 64GB eMMC Storage",
     price: 389.99,
     originalPrice: 499.99,
     discountPercentage: 22,
