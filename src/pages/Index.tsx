@@ -6,7 +6,7 @@ import { searchDeals } from "@/services/dealsService";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Discount, Tag, Tags } from "lucide-react";
+import { Percent, Tag, Tags } from "lucide-react";
 
 const Index = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
@@ -69,7 +69,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center text-center">
             <h1 className="text-4xl font-bold mb-2 flex items-center">
-              <Discount className="h-8 w-8 mr-2" />
+              <Percent className="h-8 w-8 mr-2" />
               Bargain Hunter
             </h1>
             <p className="text-lg mb-8 max-w-2xl">

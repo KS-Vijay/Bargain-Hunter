@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Deal } from "@/types";
-import { ArrowRight, Discount, Tag } from "lucide-react";
+import { ArrowRight, Tag, Percent } from "lucide-react";
 import { toast } from "sonner";
 
 interface DealCardProps {
@@ -48,7 +48,7 @@ const DealCard = ({ deal }: DealCardProps) => {
               </Badge>
             )}
             <Badge className="deal-percent text-white">
-              <Discount className="mr-1 h-3 w-3" />
+              <Percent className="mr-1 h-3 w-3" />
               {deal.discountPercentage}% off
             </Badge>
           </div>
