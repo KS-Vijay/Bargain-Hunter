@@ -28,7 +28,7 @@ const SearchBar = ({ onSearch, isLoading }: SearchBarProps) => {
             placeholder="Search for products (e.g., 'wireless headphones', 'nike shoes')"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full pl-4 pr-10 py-6 text-base rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-800"
+            className="w-full pl-4 pr-10 py-6 text-base rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-black"
             disabled={isLoading}
           />
         </div>
