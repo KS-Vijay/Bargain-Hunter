@@ -1,172 +1,93 @@
+
 import { useEffect, useState } from "react";
 import SearchBar from "@/components/SearchBar";
-import DealsList from "@/components/DealsList";
-import { Deal, DealsResponse } from "@/types";
+import { Deal } from "@/types";
 import { searchDeals } from "@/services/dealsService";
-import LoadingSpinner from "@/components/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Percent, Tag, Tags } from "lucide-react";
+import { MessageSquare, Tag, Percent, ShoppingCart, Star } from "lucide-react";
+import ChatInterface from "@/components/ChatInterface";
 
 const Index = () => {
-  const [deals, setDeals] = useState<Deal[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
-  const [total, setTotal] = useState(0);
-  const [activeTab, setActiveTab] = useState("all");
-  
-  const handleSearch = async (query: string) => {
-    setSearchQuery(query);
-    setPage(1);
-    setDeals([]);
-    await fetchDeals(query, 1);
-  };
-  
-  const fetchDeals = async (query: string, pageNum: number) => {
-    if (!query) return;
-    
-    setLoading(true);
-    try {
-      const response: DealsResponse = await searchDeals({ 
-        query, 
-        page: pageNum,
-        limit: 9
-      });
-      
-      if (pageNum === 1) {
-        setDeals(response.deals);
-      } else {
-        setDeals(prevDeals => [...prevDeals, ...response.deals]);
-      }
-      
-      setHasMore(response.hasMore);
-      setTotal(response.total);
-    } catch (error) {
-      console.error("Failed to fetch deals:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const handleLoadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    fetchDeals(searchQuery, nextPage);
-  };
-  
-  const filterDeals = (category: string) => {
-    setActiveTab(category);
-    // In a real app, this would filter the deals by category
-    // For now, we're just simulating the behavior
-  };
+  const [activeTab, setActiveTab] = useState("chat");
   
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-primary text-white py-12">
+      <header className="bg-primary text-white py-8">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center text-center">
             <h1 className="text-4xl font-bold mb-2 flex items-center">
               <Percent className="h-8 w-8 mr-2" />
               Bargain Hunter
             </h1>
-            <p className="text-lg mb-8 max-w-2xl">
-              Find the best deals, discounts and coupons across the web instantly
+            <p className="text-lg mb-4 max-w-2xl">
+              Your AI shopping assistant that finds the best deals across the web instantly
             </p>
-            <SearchBar onSearch={handleSearch} isLoading={loading} />
+            <div className="flex items-center space-x-3 text-sm mt-2">
+              <Badge variant="secondary" className="flex items-center">
+                <ShoppingCart className="h-3 w-3 mr-1" />
+                500+ Stores
+              </Badge>
+              <Badge variant="secondary" className="flex items-center">
+                <Tag className="h-3 w-3 mr-1" />
+                Real-time Deals
+              </Badge>
+              <Badge variant="secondary" className="flex items-center">
+                <Star className="h-3 w-3 mr-1" />
+                Verified Coupons
+              </Badge>
+              <Badge variant="secondary" className="flex items-center">
+                <MessageSquare className="h-3 w-3 mr-1" />
+                AI-Powered
+              </Badge>
+            </div>
           </div>
         </div>
       </header>
       
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        {searchQuery && (
-          <div className="mb-6">
-            <h2 className="text-2xl font-semibold mb-4">
-              Results for "{searchQuery}"
-            </h2>
-            <Tabs defaultValue="all" className="w-full" onValueChange={filterDeals}>
-              <TabsList className="mb-4">
-                <TabsTrigger value="all">All Deals</TabsTrigger>
-                <TabsTrigger value="hot">Hot Offers</TabsTrigger>
-                <TabsTrigger value="coupons">Coupons</TabsTrigger>
-                <TabsTrigger value="electronics">Electronics</TabsTrigger>
-              </TabsList>
-              <TabsContent value="all" className="space-y-4">
-                {loading && page === 1 ? (
-                  <LoadingSpinner />
-                ) : (
-                  <DealsList 
-                    deals={deals} 
-                    total={total} 
-                    loading={loading} 
-                    hasMore={hasMore} 
-                    onLoadMore={handleLoadMore}
-                  />
-                )}
-              </TabsContent>
-              <TabsContent value="hot" className="space-y-4">
-                {/* Other tabs would have filtered content in a real app */}
-                <DealsList 
-                  deals={deals.filter(deal => deal.isHot)} 
-                  total={deals.filter(deal => deal.isHot).length} 
-                  loading={loading} 
-                  hasMore={false} 
-                  onLoadMore={() => {}}
-                />
-              </TabsContent>
-              <TabsContent value="coupons" className="space-y-4">
-                <DealsList 
-                  deals={deals.filter(deal => deal.couponCode)} 
-                  total={deals.filter(deal => deal.couponCode).length} 
-                  loading={loading} 
-                  hasMore={false} 
-                  onLoadMore={() => {}}
-                />
-              </TabsContent>
-              <TabsContent value="electronics" className="space-y-4">
-                <DealsList 
-                  deals={deals.filter(deal => deal.category === "Electronics")} 
-                  total={deals.filter(deal => deal.category === "Electronics").length} 
-                  loading={loading} 
-                  hasMore={false} 
-                  onLoadMore={() => {}}
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
-        )}
-
-        {!searchQuery && !loading && (
-          <div className="py-16 flex flex-col items-center text-center">
-            <div className="bg-white rounded-full p-8 shadow-md mb-6">
-              <Tag className="h-16 w-16 text-primary" />
+        <Tabs defaultValue="chat" className="w-full" onValueChange={setActiveTab}>
+          <TabsList className="mb-8 max-w-md mx-auto">
+            <TabsTrigger value="chat" className="flex-1">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Chat Assistant
+            </TabsTrigger>
+            <TabsTrigger value="search" className="flex-1">
+              <Tag className="h-4 w-4 mr-2" />
+              Deal Search
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="chat" className="space-y-4">
+            <div className="max-w-4xl mx-auto">
+              <ChatInterface />
+              
+              <div className="mt-8 bg-white p-4 rounded-lg border shadow">
+                <h3 className="font-semibold mb-2">Quick Ask Examples:</h3>
+                <div className="flex flex-wrap gap-2">
+                  <Badge className="cursor-pointer p-2" variant="outline">Find me gaming laptop deals</Badge>
+                  <Badge className="cursor-pointer p-2" variant="outline">What's the best price for AirPods Pro?</Badge>
+                  <Badge className="cursor-pointer p-2" variant="outline">Show me kitchen appliance sales</Badge>
+                  <Badge className="cursor-pointer p-2" variant="outline">Find Amazon deals with coupons</Badge>
+                </div>
+              </div>
             </div>
-            <h2 className="text-2xl font-bold mb-2">Start Your Deal Hunt</h2>
-            <p className="text-gray-600 max-w-lg mb-6">
-              Search for products to find the best prices, discounts, and coupons from across the web.
-            </p>
-            <div className="flex flex-wrap justify-center gap-3 max-w-xl">
-              <Badge className="text-sm py-1.5 cursor-pointer" variant="outline" onClick={() => handleSearch("laptop")}>
-                Laptops
-              </Badge>
-              <Badge className="text-sm py-1.5 cursor-pointer" variant="outline" onClick={() => handleSearch("smartphone")}>
-                Smartphones
-              </Badge>
-              <Badge className="text-sm py-1.5 cursor-pointer" variant="outline" onClick={() => handleSearch("headphones")}>
-                Headphones
-              </Badge>
-              <Badge className="text-sm py-1.5 cursor-pointer" variant="outline" onClick={() => handleSearch("gaming")}>
-                Gaming
-              </Badge>
-              <Badge className="text-sm py-1.5 cursor-pointer" variant="outline" onClick={() => handleSearch("clothing")}>
-                Clothing
-              </Badge>
+          </TabsContent>
+          
+          <TabsContent value="search" className="space-y-4">
+            <div className="max-w-3xl mx-auto mb-8">
+              <SearchBar onSearch={() => {}} isLoading={false} />
+              
+              <div className="mt-6 text-center">
+                <p className="text-gray-600">
+                  Use the chat assistant for a more personalized deal hunting experience!
+                </p>
+              </div>
             </div>
-          </div>
-        )}
+          </TabsContent>
+        </Tabs>
       </main>
       
       {/* Footer */}
@@ -179,6 +100,11 @@ const Index = () => {
             <a href="#" className="text-gray-600 hover:text-primary">Privacy Policy</a>
             <a href="#" className="text-gray-600 hover:text-primary">Terms of Service</a>
             <a href="#" className="text-gray-600 hover:text-primary">Contact</a>
+          </div>
+          <div className="mt-4">
+            <p className="text-sm text-gray-500">
+              Note: Some links may include affiliate codes that support this service.
+            </p>
           </div>
         </div>
       </footer>

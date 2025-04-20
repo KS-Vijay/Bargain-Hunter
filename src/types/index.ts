@@ -14,6 +14,7 @@ export interface Deal {
   category: string;
   isHot?: boolean;
   rating?: number;
+  affiliateEnabled?: boolean;
 }
 
 export interface DealsResponse {

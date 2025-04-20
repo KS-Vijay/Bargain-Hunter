@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Deal } from "@/types";
-import { ArrowRight, Tag, Percent } from "lucide-react";
+import { ArrowRight, Tag, Percent, ExternalLink, Clock, Star } from "lucide-react";
 import { toast } from "sonner";
 
 interface DealCardProps {
@@ -37,7 +37,7 @@ const DealCard = ({ deal }: DealCardProps) => {
   };
 
   return (
-    <Card className="overflow-hidden transition-all duration-200 hover:shadow-lg border border-gray-200">
+    <Card className="overflow-hidden transition-all duration-200 hover:shadow-lg border border-gray-200 mb-4">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg font-bold line-clamp-2">{deal.title}</CardTitle>
@@ -47,7 +47,7 @@ const DealCard = ({ deal }: DealCardProps) => {
                 Hot Deal 🔥
               </Badge>
             )}
-            <Badge className="deal-percent text-white">
+            <Badge className="bg-primary text-white">
               <Percent className="mr-1 h-3 w-3" />
               {deal.discountPercentage}% off
             </Badge>
@@ -57,8 +57,11 @@ const DealCard = ({ deal }: DealCardProps) => {
           <span>From {deal.merchant}</span>
           {deal.rating && (
             <span className="ml-2 flex items-center">
-              • {deal.rating} ★
+              • <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 mr-1" /> {deal.rating}
             </span>
+          )}
+          {deal.affiliateEnabled && (
+            <Badge variant="outline" className="ml-2 text-xs">Affiliate</Badge>
           )}
         </div>
         <CardDescription className="mt-2 line-clamp-2">
@@ -91,7 +94,8 @@ const DealCard = ({ deal }: DealCardProps) => {
           )}
           
           {deal.expiryDate && (
-            <div className="text-sm">
+            <div className="text-sm flex items-center">
+              <Clock className="h-3 w-3 mr-1" />
               <span className={`font-medium ${isExpiringSoon ? 'text-orange-600' : 'text-gray-600'}`}>
                 {isExpiringSoon ? 'Expires soon: ' : 'Valid until: '}
                 {new Date(deal.expiryDate).toLocaleDateString()}
@@ -103,7 +107,7 @@ const DealCard = ({ deal }: DealCardProps) => {
       <CardFooter className="pt-2">
         <Button asChild className="w-full">
           <a href={deal.url} target="_blank" rel="noopener noreferrer">
-            Get Deal <ArrowRight className="ml-2 h-4 w-4" />
+            Get Deal <ExternalLink className="ml-2 h-4 w-4" />
           </a>
         </Button>
       </CardFooter>
