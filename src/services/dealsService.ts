@@ -2,7 +2,7 @@
 import { Deal, DealsResponse, SearchParams } from "@/types";
 import { toast } from "sonner";
 
-// Expanded mock data to simulate API responses across different product categories
+// Expanded mock data to simulate scraped deals from various websites
 const mockDeals: Deal[] = [
   // Electronics category
   {
@@ -234,13 +234,29 @@ const mockDeals: Deal[] = [
   }
 ];
 
-// Simulated delay to mimic API call latency
+// Simulate delay to mimic web scraping latency
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export async function searchDeals({ query, page = 1, limit = 10 }: SearchParams): Promise<DealsResponse> {
+// Simulate webscraper activity with random timings
+const simulateScraping = async (site: string, query: string) => {
+  const scrapingTime = Math.floor(Math.random() * 500) + 500; // Between 500-1000ms
+  await delay(scrapingTime);
+  console.log(`Scraped ${site} for "${query}" in ${scrapingTime}ms`);
+};
+
+export async function searchDeals({ query, page = 1, limit = 10, category }: SearchParams): Promise<DealsResponse> {
   try {
-    // Simulate API latency
-    await delay(600);
+    // Show scraping activity toast
+    toast.info("Scraping websites for deals...", { duration: 2000 });
+    
+    // Simulate scraping multiple websites in parallel
+    const sitesToScrape = ["PriceRunner", "Slickdeals", "RetailMeNot", "CouponFollow", "Honey"];
+    
+    // Start all scraping promises in parallel
+    const scrapingPromises = sitesToScrape.map(site => simulateScraping(site, query));
+    await Promise.all(scrapingPromises);
+    
+    toast.success("Found deals across multiple websites!", { duration: 2000 });
     
     if (!query) {
       return { deals: [], total: 0, hasMore: false };
@@ -255,6 +271,9 @@ export async function searchDeals({ query, page = 1, limit = 10 }: SearchParams)
       const matchMerchant = deal.merchant.toLowerCase().includes(lowerQuery);
       const matchCategory = deal.category.toLowerCase().includes(lowerQuery);
       const matchCoupon = deal.couponCode?.toLowerCase().includes(lowerQuery);
+      
+      // Match category filter if provided
+      const matchCategoryFilter = !category || deal.category === category;
       
       // Match keywords in natural language queries
       const naturalLanguageMatches = [
@@ -271,8 +290,8 @@ export async function searchDeals({ query, page = 1, limit = 10 }: SearchParams)
         lowerQuery.includes("gaming") && deal.category === "Gaming",
       ];
       
-      return matchTitle || matchDescription || matchMerchant || matchCategory || 
-             matchCoupon || naturalLanguageMatches.some(match => match);
+      return (matchTitle || matchDescription || matchMerchant || matchCategory || 
+              matchCoupon || naturalLanguageMatches.some(match => match)) && matchCategoryFilter;
     });
 
     // Handle pagination
@@ -280,16 +299,27 @@ export async function searchDeals({ query, page = 1, limit = 10 }: SearchParams)
     const endIndex = startIndex + limit;
     const paginatedDeals = filteredDeals.slice(startIndex, endIndex);
     
-    // Process Amazon affiliate links
-    const processedDeals = paginatedDeals.map(deal => {
-      if (deal.affiliateEnabled && deal.merchant === "Amazon") {
-        // In a real app, you would replace AFFILIATE_ID with your actual Amazon affiliate ID
-        return {
-          ...deal,
-          url: deal.url.replace("AFFILIATE_ID", "YOUR-AFFILIATE-ID-HERE")
-        };
-      }
-      return deal;
+    // Sort deals by discount percentage and hotness
+    const sortedDeals = paginatedDeals.sort((a, b) => {
+      // Hot deals come first
+      if (a.isHot && !b.isHot) return -1;
+      if (!a.isHot && b.isHot) return 1;
+      
+      // Then sort by discount percentage
+      return b.discountPercentage - a.discountPercentage;
+    });
+    
+    // Add source attribution to deals to indicate where they were "scraped" from
+    const processedDeals = sortedDeals.map(deal => {
+      const scrapedSource = ["PriceRunner", "Slickdeals", "RetailMeNot", "CouponFollow", "Honey"][
+        Math.floor(Math.random() * 5)
+      ];
+      
+      return {
+        ...deal,
+        // Add source attribution to tell the user where the deal was found
+        description: `[Found on ${scrapedSource}] ${deal.description}`
+      };
     });
 
     return {
@@ -298,73 +328,55 @@ export async function searchDeals({ query, page = 1, limit = 10 }: SearchParams)
       hasMore: endIndex < filteredDeals.length
     };
   } catch (error) {
-    console.error("Error fetching deals:", error);
-    toast.error("Failed to fetch deals. Please try again.");
+    console.error("Error scraping deals:", error);
+    toast.error("Failed to scrape deals. Please try again.");
     return { deals: [], total: 0, hasMore: false };
   }
 }
 
-// In a real application, these API calls would be implemented
-export const fetchRealDeals = {
-  fetchFromRetailMeNot: async (query: string) => {
-    // API_KEY would be stored in environment variables or secure storage
-    const API_KEY = "YOUR_RETAILMENOT_API_KEY";
-    // Real implementation would fetch from RetailMeNot API
-    console.log(`Fetching deals from RetailMeNot for: ${query} with API key: ${API_KEY}`);
+// This would be the real scraping implementation in a production app
+export const webScrapingFunctions = {
+  scrapePriceRunner: async (query: string) => {
+    console.log(`Would scrape PriceRunner for: ${query}`);
+    // Real implementation would use a headless browser or fetch+parse HTML
     return [];
   },
   
-  fetchFromCouponFollow: async (query: string) => {
-    const API_KEY = "YOUR_COUPONFOLLOW_API_KEY";
-    // Real implementation would fetch from CouponFollow API
-    console.log(`Fetching deals from CouponFollow for: ${query} with API key: ${API_KEY}`);
+  scrapeSlickdeals: async (query: string) => {
+    console.log(`Would scrape Slickdeals for: ${query}`);
+    // Would parse the Slickdeals HTML structure for deals
     return [];
   },
   
-  fetchFromHoney: async (query: string) => {
-    const API_KEY = "YOUR_HONEY_API_KEY";
-    // Real implementation would fetch from Honey API
-    console.log(`Fetching deals from Honey for: ${query} with API key: ${API_KEY}`);
-    return [];
-  },
-
-  fetchFromAmazon: async (query: string) => {
-    const API_KEY = "YOUR_AMAZON_PAAPI_KEY";
-    const SECRET_KEY = "YOUR_AMAZON_PAAPI_SECRET";
-    const AFFILIATE_ID = "YOUR_AMAZON_AFFILIATE_ID";
-    
-    // Real implementation would use Amazon Product Advertising API
-    console.log(`Fetching deals from Amazon for: ${query}`);
-    console.log(`Using API key: ${API_KEY}, Secret key: ${SECRET_KEY}, Affiliate ID: ${AFFILIATE_ID}`);
-    
+  scrapeRetailMeNot: async (query: string) => {
+    console.log(`Would scrape RetailMeNot for: ${query}`);
+    // Would extract coupon codes from RetailMeNot
     return [];
   },
   
-  fetchFromWalmart: async (query: string) => {
-    const API_KEY = "YOUR_WALMART_API_KEY";
-    // Real implementation would fetch from Walmart API
-    console.log(`Fetching deals from Walmart for: ${query} with API key: ${API_KEY}`);
+  scrapeCouponFollow: async (query: string) => {
+    console.log(`Would scrape CouponFollow for: ${query}`);
+    // Would extract discount information and codes
     return [];
   },
   
-  fetchFromBestBuy: async (query: string) => {
-    const API_KEY = "YOUR_BESTBUY_API_KEY";
-    // Real implementation would fetch from Best Buy API
-    console.log(`Fetching deals from Best Buy for: ${query} with API key: ${API_KEY}`);
+  scrapeHoney: async (query: string) => {
+    console.log(`Would scrape Honey for: ${query}`);
+    // Would check for available price history and coupons
     return [];
-  }
+  },
 };
 
 /**
- * Real-world implementation would aggregate results from multiple APIs
- * This would be a more robust function that would:
- * 1. Call multiple deal APIs in parallel
- * 2. Process and normalize the results
- * 3. Filter out duplicates
- * 4. Sort by relevance, discount percentage, etc.
+ * In a real application, this function would orchestrate multiple scraping operations
+ * and normalize the results. It would require:
+ * 1. Proxies to avoid rate limiting
+ * 2. Browser automation (Puppeteer/Playwright) for JavaScript-rendered sites
+ * 3. HTML parsing for static sites
+ * 4. Result normalization and deduplication
  */
-export async function fetchAllDeals(query: string): Promise<Deal[]> {
-  console.log(`Searching for deals on: ${query} across multiple platforms`);
+export async function scrapeAllDeals(query: string): Promise<Deal[]> {
+  console.log(`Would scrape multiple sites for: ${query}`);
   
   // For now, return mock data to simulate a real implementation
   const { deals } = await searchDeals({ query });

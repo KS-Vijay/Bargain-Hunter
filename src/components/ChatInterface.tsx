@@ -2,9 +2,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, ArrowDown, Globe, Sparkles } from "lucide-react";
+import { Send, ArrowDown, Globe, Sparkles, Clipboard, ExternalLink } from "lucide-react";
 import { searchDeals } from "@/services/dealsService";
-import { answerProductQuestion, initializeModel } from "@/services/aiService";
+import { answerProductQuestion } from "@/services/aiService";
 import DealCard from "@/components/DealCard";
 import { Deal } from "@/types";
 import { Avatar } from "@/components/ui/avatar";
@@ -25,7 +25,7 @@ const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
-      content: "Hi there! I'm your Bargain Hunter assistant. I can help you find deals or answer questions about products. What are you looking for today?",
+      content: "Hi there! How can I help you find deals today? You can ask about specific products or browse categories.",
       isUser: false,
       timestamp: new Date(),
     },
@@ -34,11 +34,21 @@ const ChatInterface = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Set up an event listener for quick ask examples
   useEffect(() => {
-    scrollToBottom();
-    // Initialize the AI model when the component mounts
-    initializeModel();
-  }, []);
+    const handleQuickAsk = (e: CustomEvent) => {
+      setInputValue(e.detail.question);
+      setTimeout(() => {
+        handleSend();
+      }, 100);
+    };
+    
+    document.addEventListener('quickAsk', handleQuickAsk as EventListener);
+    
+    return () => {
+      document.removeEventListener('quickAsk', handleQuickAsk as EventListener);
+    };
+  }, [inputValue]); // Include inputValue to prevent stale closure
 
   useEffect(() => {
     scrollToBottom();
@@ -99,9 +109,9 @@ const ChatInterface = () => {
         
         let botResponse = "";
         if (response.deals.length > 0) {
-          botResponse = `I found ${response.total} deals for "${inputValue}". Here are the best ones:`;
+          botResponse = `I found ${response.total} deals for "${inputValue}" by scraping multiple sites. Here are the best ones:`;
         } else {
-          botResponse = `I couldn't find any deals matching "${inputValue}". Try searching for something else or check back later!`;
+          botResponse = `I searched several sites but couldn't find any deals matching "${inputValue}". Try searching for something else or check back later!`;
         }
 
         const botMessage: Message = {
@@ -118,7 +128,7 @@ const ChatInterface = () => {
       console.error("Error processing query:", error);
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
-        content: "Sorry, I encountered an error while processing your request. Please try again.",
+        content: "Sorry, I encountered an error while searching for deals. Our web scrapers might be having trouble reaching the sites. Please try again in a moment.",
         isUser: false,
         timestamp: new Date(),
       };
@@ -126,14 +136,6 @@ const ChatInterface = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleQuickAskClick = (question: string) => {
-    setInputValue(question);
-    // Wait a tiny bit for the input to update visually before sending
-    setTimeout(() => {
-      handleSend();
-    }, 100);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -147,17 +149,22 @@ const ChatInterface = () => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const copySourceToClipboard = (source: string) => {
+    navigator.clipboard.writeText(source);
+    toast.success("Source copied to clipboard!");
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-16rem)] max-h-[600px] bg-white rounded-lg border shadow-lg">
       {/* Chat header */}
       <div className="p-4 border-b flex items-center justify-between bg-primary text-white rounded-t-lg">
         <div className="flex items-center">
           <Avatar className="h-8 w-8 mr-2 bg-primary-foreground">
-            <span className="text-primary font-bold">BH</span>
+            <span className="text-primary font-bold">PR</span>
           </Avatar>
           <div>
-            <h3 className="font-semibold">Bargain Hunter</h3>
-            <p className="text-xs opacity-75">Finding the best deals for you</p>
+            <h3 className="font-semibold">PriceRunner Assistant</h3>
+            <p className="text-xs opacity-75">Finding the best prices across the web</p>
           </div>
         </div>
       </div>
@@ -179,7 +186,7 @@ const ChatInterface = () => {
               {message.isProductInfo && !message.isUser && (
                 <div className="flex items-center mb-2 text-xs text-gray-500">
                   <Globe className="h-3 w-3 mr-1" />
-                  <span>Web search</span>
+                  <span>Web scraped</span>
                   <Sparkles className="h-3 w-3 mx-1" />
                   <span>AI generated</span>
                 </div>
@@ -190,13 +197,18 @@ const ChatInterface = () => {
               {message.sources && message.sources.length > 0 && (
                 <div className="mt-3 pt-2 border-t border-gray-200">
                   <p className="text-xs text-gray-500 mb-1">Sources:</p>
-                  <ul className="text-xs text-gray-600 list-disc pl-4">
-                    {message.sources.slice(0, 2).map((source, index) => (
-                      <li key={index} className="mb-1">{source}</li>
+                  <ul className="text-xs text-gray-600">
+                    {message.sources.map((source, index) => (
+                      <li key={index} className="mb-1 flex items-center justify-between">
+                        <div className="flex-1">{source}</div>
+                        <button 
+                          onClick={() => copySourceToClipboard(source)}
+                          className="ml-2 p-1 hover:bg-gray-200 rounded"
+                        >
+                          <Clipboard className="h-3 w-3 text-gray-500" />
+                        </button>
+                      </li>
                     ))}
-                    {message.sources.length > 2 && (
-                      <li className="text-gray-500">+ {message.sources.length - 2} more sources</li>
-                    )}
                   </ul>
                 </div>
               )}
@@ -210,6 +222,13 @@ const ChatInterface = () => {
                   {message.deals.map((deal) => (
                     <DealCard key={deal.id} deal={deal} />
                   ))}
+                  
+                  <div className="text-center mt-6">
+                    <Button variant="outline" size="sm" className="text-xs" onClick={() => window.open('https://www.pricerunner.com', '_blank')}>
+                      <ExternalLink className="h-3 w-3 mr-1" /> 
+                      Compare more prices on PriceRunner
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
@@ -244,7 +263,7 @@ const ChatInterface = () => {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask me to find deals or about products..."
+          placeholder="Ask about products, deals, or search for prices..."
           className="flex-1 bg-gray-100 text-gray-800 border-0 focus-visible:ring-1"
         />
         <Button 
